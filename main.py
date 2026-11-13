@@ -47,9 +47,6 @@ def index(state: State) -> Page:
         Button("About Ski Finder", "about_page")
     ])
 
-    
-    assert_equal(len(state.ski_options) > 0, True)
-    assert_equal(state.skill_level, "Beginner")
 
     return page
 
@@ -91,28 +88,9 @@ def questionnaire_page(state: State) -> Page:
         Button("Back to Home", "index")
     ])
 
-   
-    assert_equal(
-        state.skill_level in ["Beginner", "Intermediate", "Advanced"],
-        True
-    )
-    assert_equal(
-        state.preferred_terrain in [
-            "Groomed runs", "All-mountain", "Powder"
-        ],
-        True
-    )
-    assert_equal(
-        state.budget in [
-            "Under $300", "$300-$500", "$500-$800", "$800+"
-        ],
-        True
-    )
-
     return page
 
 
-# This route receives the answers from the questionnaire.
 @route
 def submit_preferences(state: State, skill_level: str,
                        preferred_terrain: str, height: str,
@@ -155,30 +133,6 @@ def submit_preferences(state: State, skill_level: str,
     else:
         state.message = "These skis match your answers."
 
-    
-    assert_equal(state.skill_level, skill_level)
-    assert_equal(state.preferred_terrain, preferred_terrain)
-    assert_equal(state.height, height)
-    assert_equal(state.weight, weight)
-    assert_equal(state.budget, budget)
-
-   
-    for ski in state.recommended_skis:
-        assert_equal(ski.terrain, preferred_terrain)
-        assert_equal(ski.skill_level, skill_level)
-        assert_equal(ski.price <= budget_limit, True)
-
-        if len(state.recommended_skis) == 0:
-            assert_equal(
-                state.message,
-                "No skis matched all of your answers. "
-                "Try changing your terrain, skill level, or budget."
-            )
-    else:
-        assert_equal(
-            state.message,
-            "Here are the skis that match your answers!"
-        )
 
     return results_page(state)
 
@@ -233,11 +187,6 @@ def results_page(state: State) -> Page:
 
     page = Page(state, content)
 
-    
-    assert_equal(len(state.recommended_skis) >= 0, True)
-    assert_equal(ski.terrain, state.preferred_terrain)
-    assert_equal(ski.skill_level, state.skill_level)
-
     return page
 
 
@@ -286,9 +235,6 @@ def ski_details_page(state: State, ski_name: str) -> Page:
 
     page = Page(state, content)
 
-    assert_equal(state.viewing_ski, ski_name)
-    assert_equal(ski_found, True)
-
     return page
 
 
@@ -321,22 +267,6 @@ def toggle_favorite(state: State, ski_name: str) -> Page:
 
                 state.favorite_skis = remaining_favorites
                 state.message = ski.name + " was removed from favorites."
-
-    assert_equal(ski_found, True)
-
-    if len(state.favorite_skis) > old_favorite_count:
-        assert_equal(len(state.favorite_skis), old_favorite_count + 1)
-        assert_equal(state.message, ski_name + " was added to favorites.")
-    else:
-        assert_equal(len(state.favorite_skis), old_favorite_count - 1)
-        assert_equal(state.message, ski_name + " was removed from favorites.")
-
-    for ski in state.ski_options:
-        if ski.name == ski_name:
-            assert_equal(
-                ski.is_favorite,
-                ski in state.favorite_skis
-            )
 
     return results_page(state)
 
@@ -387,10 +317,6 @@ def favorites_page(state: State) -> Page:
     content.append(Button("Back to Home", "index"))
 
     page = Page(state, content)
-
-
-    for ski in state.favorite_skis:
-        assert_equal(ski.is_favorite, True)
 
     return page
 
@@ -448,19 +374,6 @@ def remove_favorite(state: State, ski_name: str) -> Page:
 
     state.message = ski_name + " was removed from favorites."
 
-    assert_equal(ski_found, True)
-
-    for favorite in state.favorite_skis:
-        assert_equal(favorite.name != ski_name, True)
-
-    for ski in state.ski_options:
-        if ski.name == ski_name:
-            assert_equal(ski.is_favorite, False)
-
-    assert_equal(
-        state.message,
-        ski_name + " was removed from favorites."
-    )
 
     return favorites_page(state)
 
@@ -559,14 +472,86 @@ starting_state = State(
     ""
 )
 
+test_state = make_test_state()
+assert_equal(index(test_state).content[0], Header("Welcome to Ski Finder!"))
 
-# Tests for the starting State.
-assert_equal(starting_state.skill_level, "Beginner")
-assert_equal(starting_state.preferred_terrain, "Groomed runs")
-assert_equal(starting_state.budget, "$300-$500")
-assert_equal(len(starting_state.ski_options), 6)
-assert_equal(starting_state.recommended_skis, [])
-assert_equal(starting_state.favorite_skis, [])
+# Test questionnaire page
+test_state = make_test_state()
+assert_equal(questionnaire_page(test_state).content[0], Header("Ski Finder Questionnaire"))
+
+# Test submitting beginner preferences
+test_state = make_test_state()
+submit_preferences(test_state, "Beginner", "Groomed runs", "66", "150", "$300-$500")
+assert_equal(test_state.skill_level, "Beginner")
+assert_equal(test_state.preferred_terrain, "Groomed runs")
+assert_equal(test_state.height, "66")
+assert_equal(test_state.weight, "150")
+assert_equal(len(test_state.recommended_skis), 1)
+assert_equal(test_state.recommended_skis[0].name, "Rossignol Experience 76")
+
+# Test submitting preferences with no matching skis
+test_state = make_test_state()
+submit_preferences(test_state, "Beginner", "Powder", "66", "150", "$300-$500")
+assert_equal(len(test_state.recommended_skis), 0)
+
+# Test results page
+test_state = make_test_state()
+test_state.recommended_skis.append(test_state.ski_options[0])
+assert_equal(results_page(test_state).content[0], Header("Your Ski Recommendations"))
+
+# Test ski details page
+test_state = make_test_state()
+ski_details_page(test_state, "Rossignol Experience 76")
+assert_equal(test_state.viewing_ski, "Rossignol Experience 76")
+
+# Test adding a favorite
+test_state = make_test_state()
+toggle_favorite(test_state, "Rossignol Experience 76")
+assert_equal(test_state.ski_options[0].is_favorite, True)
+assert_equal(len(test_state.favorite_skis), 1)
+assert_equal(test_state.favorite_skis[0].name, "Rossignol Experience 76")
+
+# Test removing a favorite by toggling it again
+test_state = make_test_state()
+toggle_favorite(test_state, "Rossignol Experience 76")
+toggle_favorite(test_state, "Rossignol Experience 76")
+assert_equal(test_state.ski_options[0].is_favorite, False)
+assert_equal(len(test_state.favorite_skis), 0)
+
+# Test favorites page
+test_state = make_test_state()
+test_state.favorite_skis.append(test_state.ski_options[0])
+test_state.ski_options[0].is_favorite = True
+assert_equal(favorites_page(test_state).content[0], Header("My Favorite Skis"))
+
+# Test removing a favorite
+test_state = make_test_state()
+test_state.favorite_skis.append(test_state.ski_options[0])
+test_state.ski_options[0].is_favorite = True
+remove_favorite(test_state, "Rossignol Experience 76")
+assert_equal(len(test_state.favorite_skis), 0)
+assert_equal(test_state.ski_options[0].is_favorite, False)
+
+# Test about page
+test_state = make_test_state()
+assert_equal(about_page(test_state).content[0], Header("About Ski Finder"))
+
+# Test resetting questionnaire
+test_state = make_test_state()
+test_state.skill_level = "Advanced"
+test_state.preferred_terrain = "Powder"
+test_state.height = "70"
+test_state.weight = "180"
+test_state.budget = "$800+"
+test_state.recommended_skis.append(test_state.ski_options[0])
+reset_questionnaire(test_state)
+assert_equal(test_state.skill_level, "Beginner")
+assert_equal(test_state.preferred_terrain, "Groomed runs")
+assert_equal(test_state.height, "")
+assert_equal(test_state.weight, "")
+assert_equal(test_state.budget, "$300-$500")
+assert_equal(len(test_state.recommended_skis), 0)
+
 
 
 # Start the website.
