@@ -1,6 +1,15 @@
 from drafter import *
 from dataclasses import dataclass
-from bakery import assert_equal
+
+set_site_information(
+    author="CS1 Student",
+    description="Ski Finder helps skiers find skis based on their skill level, "
+                "preferred terrain, and budget.",
+    sources="",
+    planning="",
+    links=["https://github.com/willgilp/ski-finder-site"]
+)
+
 
 # This class stores information about one type of ski.
 @dataclass
@@ -31,12 +40,9 @@ class State:
 @route
 def index(state: State) -> Page:
     """
-       Initial page that you are greeted with.
-       Gives you 3 different options of buttons to click from.
-       One brings you to the questionare page to find skis for you,
-       another brings you to your favorites. And the last button brings
-       you to the info about the website.
-       """
+    Initial page that you are greeted with.
+    Gives you 3 different options of buttons to click from.
+    """
     page = Page(state, [
         Header("Welcome to Ski Finder!"),
         "Find skis that fit your experience, preferred terrain, and budget.",
@@ -47,17 +53,15 @@ def index(state: State) -> Page:
         Button("About Ski Finder", "about_page")
     ])
 
-
     return page
-
 
 
 @route
 def questionnaire_page(state: State) -> Page:
     """
-       Questionare page that helps you finds skis recommended
-       for your preferences.
-       """
+    Questionnaire page that helps you find skis recommended
+    for your preferences.
+    """
     page = Page(state, [
         Header("Ski Finder Questionnaire"),
         "Choose the answers that best describe you.",
@@ -96,9 +100,9 @@ def submit_preferences(state: State, skill_level: str,
                        preferred_terrain: str, height: str,
                        weight: str, budget: str) -> Page:
     """
-        This route receives all the answers from the questionare
-        and digests the answers
-        """
+    This route receives all the answers from the questionnaire
+    and processes the answers.
+    """
     state.skill_level = skill_level
     state.preferred_terrain = preferred_terrain
     state.height = height
@@ -133,17 +137,15 @@ def submit_preferences(state: State, skill_level: str,
     else:
         state.message = "These skis match your answers."
 
-
     return results_page(state)
-
 
 
 @route
 def results_page(state: State) -> Page:
-    """ Page that displays
-        the results. The recommended skis
-        """
-    content = [
+    """
+    Page that displays the ski recommendations.
+    """
+    content: list[Any] = [
         Header("Your Ski Recommendations"),
         state.message,
         "",
@@ -168,7 +170,7 @@ def results_page(state: State) -> Page:
                 Button(
                     "View Details",
                     "ski_details_page",
-                    [Argument("ski_name", ski.name)]
+                    {"ski_name": ski.name}
                 )
             )
 
@@ -176,7 +178,7 @@ def results_page(state: State) -> Page:
                 Button(
                     "Add to Favorites",
                     "toggle_favorite",
-                    [Argument("ski_name", ski.name)]
+                    {"ski_name": ski.name}
                 )
             )
             content.append("")
@@ -192,15 +194,13 @@ def results_page(state: State) -> Page:
 
 @route
 def ski_details_page(state: State, ski_name: str) -> Page:
-    state.viewing_ski = ski_name
-    
     """
-        This page explains more in
-        depth details about the skis found for
-        you
-        """
+    This page explains more in-depth details about the skis
+    found for the user.
+    """
+    state.viewing_ski = ski_name
 
-    content = [Header("Ski Details")]
+    content: list[Any] = [Header("Ski Details")]
     ski_found = False
 
     # Search the ski list for the selected ski.
@@ -223,7 +223,7 @@ def ski_details_page(state: State, ski_name: str) -> Page:
                 Button(
                     "Add or Remove Favorite",
                     "toggle_favorite",
-                    [Argument("ski_name", ski.name)]
+                    {"ski_name": ski.name}
                 )
             )
 
@@ -240,16 +240,11 @@ def ski_details_page(state: State, ski_name: str) -> Page:
 
 @route
 def toggle_favorite(state: State, ski_name: str) -> Page:
-    ski_found = False
-    old_favorite_count = len(state.favorite_skis)
-    """This route
-        adds a ski to favorites or removes.
-        """
-
-    
+    """
+    This route adds a ski to favorites or removes it.
+    """
     for ski in state.ski_options:
         if ski.name == ski_name:
-            ski_found = True
 
             if ski.is_favorite == False:
                 ski.is_favorite = True
@@ -273,14 +268,10 @@ def toggle_favorite(state: State, ski_name: str) -> Page:
 
 @route
 def favorites_page(state: State) -> Page:
-    
     """
-        Page that displays the persons favorites.
-        You will see all of the skis that you selected as favrotie
-        on this page.
-        """
-    
-    content = [
+    Page that displays the person's favorite skis.
+    """
+    content: list[Any] = [
         Header("My Favorite Skis"),
         state.message,
         ""
@@ -300,7 +291,7 @@ def favorites_page(state: State) -> Page:
                 Button(
                     "View Details",
                     "ski_details_page",
-                    [Argument("ski_name", ski.name)]
+                    {"ski_name": ski.name}
                 )
             )
 
@@ -308,7 +299,7 @@ def favorites_page(state: State) -> Page:
                 Button(
                     "Remove from Favorites",
                     "remove_favorite",
-                    [Argument("ski_name", ski.name)]
+                    {"ski_name": ski.name}
                 )
             )
             content.append("")
@@ -323,10 +314,10 @@ def favorites_page(state: State) -> Page:
 
 @route
 def about_page(state: State) -> Page:
-    """ The about page that you can click on in the homme page.
-        this pages serves as a way to explain the purpose of this website,
-        and any limitations experienced too.
-        """
+    """
+    The about page explains the purpose of this website
+    and its limitations.
+    """
     page = Page(state, [
         Header("About Ski Finder"),
         "Ski Finder is designed to help beginners and other skiers "
@@ -345,17 +336,13 @@ def about_page(state: State) -> Page:
         Button("Back to Home", "index")
     ])
 
-       
-
     return page
 
 
 @route
 def remove_favorite(state: State, ski_name: str) -> Page:
     """
-    This function removes a ski that you favorited
-    in the website. You may not like the ski that you picked
-    anymore and want to remove it, so this function helps with that.
+    This function removes a ski that you favorited.
     """
     remaining_favorites = []
 
@@ -365,15 +352,11 @@ def remove_favorite(state: State, ski_name: str) -> Page:
 
     state.favorite_skis = remaining_favorites
 
-    ski_found = False
-
     for ski in state.ski_options:
         if ski.name == ski_name:
-            ski_found = True
             ski.is_favorite = False
 
     state.message = ski_name + " was removed from favorites."
-
 
     return favorites_page(state)
 
@@ -391,14 +374,6 @@ def reset_questionnaire(state: State) -> Page:
     state.budget = "$300-$500"
     state.recommended_skis = []
     state.message = "Your answers have been reset."
-
-    assert_equal(state.skill_level, "Beginner")
-    assert_equal(state.preferred_terrain, "Groomed runs")
-    assert_equal(state.height, "")
-    assert_equal(state.weight, "")
-    assert_equal(state.budget, "$300-$500")
-    assert_equal(state.recommended_skis, [])
-    assert_equal(state.message, "Your answers have been reset.")
 
     return questionnaire_page(state)
 
@@ -472,32 +447,89 @@ starting_state = State(
     ""
 )
 
+
+# Make a fresh State for each test.
+def make_test_state() -> State:
+    test_ski_options = []
+
+    for ski in starting_state.ski_options:
+        test_ski_options.append(
+            Ski(
+                ski.name,
+                ski.terrain,
+                ski.skill_level,
+                ski.price,
+                ski.description,
+                False
+            )
+        )
+
+    return State(
+        "Beginner",
+        "Groomed runs",
+        "",
+        "",
+        "$300-$500",
+        test_ski_options,
+        [],
+        [],
+        "",
+        ""
+    )
+
+
+# TESTS
+
+# Test home page
 test_state = make_test_state()
 assert_equal(index(test_state).content[0], Header("Welcome to Ski Finder!"))
 
 # Test questionnaire page
 test_state = make_test_state()
-assert_equal(questionnaire_page(test_state).content[0], Header("Ski Finder Questionnaire"))
+assert_equal(
+    questionnaire_page(test_state).content[0],
+    Header("Ski Finder Questionnaire")
+)
 
 # Test submitting beginner preferences
 test_state = make_test_state()
-submit_preferences(test_state, "Beginner", "Groomed runs", "66", "150", "$300-$500")
+submit_preferences(
+    test_state,
+    "Beginner",
+    "Groomed runs",
+    "66",
+    "150",
+    "$300-$500"
+)
 assert_equal(test_state.skill_level, "Beginner")
 assert_equal(test_state.preferred_terrain, "Groomed runs")
 assert_equal(test_state.height, "66")
 assert_equal(test_state.weight, "150")
 assert_equal(len(test_state.recommended_skis), 1)
-assert_equal(test_state.recommended_skis[0].name, "Rossignol Experience 76")
+assert_equal(
+    test_state.recommended_skis[0].name,
+    "Rossignol Experience 76"
+)
 
 # Test submitting preferences with no matching skis
 test_state = make_test_state()
-submit_preferences(test_state, "Beginner", "Powder", "66", "150", "$300-$500")
+submit_preferences(
+    test_state,
+    "Beginner",
+    "Powder",
+    "66",
+    "150",
+    "$300-$500"
+)
 assert_equal(len(test_state.recommended_skis), 0)
 
 # Test results page
 test_state = make_test_state()
 test_state.recommended_skis.append(test_state.ski_options[0])
-assert_equal(results_page(test_state).content[0], Header("Your Ski Recommendations"))
+assert_equal(
+    results_page(test_state).content[0],
+    Header("Your Ski Recommendations")
+)
 
 # Test ski details page
 test_state = make_test_state()
@@ -509,7 +541,10 @@ test_state = make_test_state()
 toggle_favorite(test_state, "Rossignol Experience 76")
 assert_equal(test_state.ski_options[0].is_favorite, True)
 assert_equal(len(test_state.favorite_skis), 1)
-assert_equal(test_state.favorite_skis[0].name, "Rossignol Experience 76")
+assert_equal(
+    test_state.favorite_skis[0].name,
+    "Rossignol Experience 76"
+)
 
 # Test removing a favorite by toggling it again
 test_state = make_test_state()
@@ -522,7 +557,10 @@ assert_equal(len(test_state.favorite_skis), 0)
 test_state = make_test_state()
 test_state.favorite_skis.append(test_state.ski_options[0])
 test_state.ski_options[0].is_favorite = True
-assert_equal(favorites_page(test_state).content[0], Header("My Favorite Skis"))
+assert_equal(
+    favorites_page(test_state).content[0],
+    Header("My Favorite Skis")
+)
 
 # Test removing a favorite
 test_state = make_test_state()
@@ -534,7 +572,10 @@ assert_equal(test_state.ski_options[0].is_favorite, False)
 
 # Test about page
 test_state = make_test_state()
-assert_equal(about_page(test_state).content[0], Header("About Ski Finder"))
+assert_equal(
+    about_page(test_state).content[0],
+    Header("About Ski Finder")
+)
 
 # Test resetting questionnaire
 test_state = make_test_state()
@@ -544,7 +585,9 @@ test_state.height = "70"
 test_state.weight = "180"
 test_state.budget = "$800+"
 test_state.recommended_skis.append(test_state.ski_options[0])
+
 reset_questionnaire(test_state)
+
 assert_equal(test_state.skill_level, "Beginner")
 assert_equal(test_state.preferred_terrain, "Groomed runs")
 assert_equal(test_state.height, "")
@@ -553,6 +596,6 @@ assert_equal(test_state.budget, "$300-$500")
 assert_equal(len(test_state.recommended_skis), 0)
 
 
-
 # Start the website.
 start_server(starting_state)
+
