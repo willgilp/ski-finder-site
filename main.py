@@ -1,5 +1,6 @@
 from drafter import *
 from dataclasses import dataclass
+from typing import Any
 
 set_site_information(
     author="CS1 Student",
